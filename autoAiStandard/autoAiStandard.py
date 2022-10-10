@@ -1,11 +1,12 @@
 # autoAiStandard.py
 
 # Powered by: Joseph Chen
-# Date 12 Oct 2021
-# Version 1.0
+# Date 15 Oct 2021
+# Version 2.0
 # Contact: joseph50422@gmail.com
 
 import maya.cmds as cmds
+from functools import partial
 
 def createBaseColor(S_Name, UV_Name, sourecPath,fileFormat):
 	# S_Name = Shader Name, T_Name = Texture Name, CC_Name = ColorCorrect Node Name
@@ -27,7 +28,7 @@ def createRoughness(S_Name, UV_Name, sourecPath,fileFormat):
 	cmds.setAttr('%s.fileTextureName' %T_Name, '%s%s.%s' %(sourecPath, T_Name, fileFormat), type="string")
 	cmds.setAttr('%s.ignoreColorSpaceFileRules' %T_Name, 1)
 	cmds.setAttr('%s.alphaIsLuminance' %T_Name, 1)
-	cmds.setAttr('%s.colorSpace' %T_Name, 'Utility - Raw', type="string")
+	cmds.setAttr('%s.colorSpace' %T_Name, 'Raw', type="string")
 
 	CC_Name = cmds.shadingNode("aiColorCorrect", asUtility = True, n = T_Name + "_CC" )
 
@@ -41,7 +42,7 @@ def createMetalness(S_Name, UV_Name, sourecPath,fileFormat):
 	cmds.setAttr('%s.fileTextureName' %T_Name, '%s%s.%s' %(sourecPath, T_Name, fileFormat), type="string")
 	cmds.setAttr('%s.ignoreColorSpaceFileRules' %T_Name, 1)
 	cmds.setAttr('%s.alphaIsLuminance' %T_Name, 1)
-	cmds.setAttr('%s.colorSpace' %T_Name, 'Utility - Raw', type="string")
+	cmds.setAttr('%s.colorSpace' %T_Name, 'Raw', type="string")
 
 	CC_Name = cmds.shadingNode("aiColorCorrect", asUtility = True, n = T_Name + "_CC" )
 
@@ -56,7 +57,7 @@ def createSubsurface(S_Name, UV_Name, sourecPath,fileFormat):
 	cmds.setAttr('%s.fileTextureName' %T_Name, '%s%s.%s' %(sourecPath, T_Name, fileFormat), type="string")
 	cmds.setAttr('%s.ignoreColorSpaceFileRules' %T_Name, 1)
 	cmds.setAttr('%s.alphaIsLuminance' %T_Name, 1)
-	cmds.setAttr('%s.colorSpace' %T_Name, 'Utility - Raw', type="string")
+	cmds.setAttr('%s.colorSpace' %T_Name, 'Raw', type="string")
 
 	Color_Name = cmds.shadingNode("aiColorCorrect", asUtility = True, n = S_Name + "_SSSColor_CC" )
 	Radius_Name = cmds.shadingNode("aiColorCorrect", asUtility = True, n = S_Name + "SSSRadius_CC" )
@@ -67,13 +68,15 @@ def createSubsurface(S_Name, UV_Name, sourecPath,fileFormat):
 	cmds.connectAttr('%s_BaseColor.outColor' %S_Name, '%s.input' %Color_Name, f = True)
 	cmds.connectAttr('%s.outColor' %Color_Name, '%s.subsurfaceColor' %S_Name, f = True)
 
+	cmds.setAttr('%s.subsurface' %S_Name, 1.0)
+
 def createNormal(S_Name, UV_Name, sourecPath,fileFormat):
 	# S_Name = Shader Name, T_Name = Texture Name, N_Name = aiNormalMap Node Name
 	T_Name = S_Name + "_Normal"
 	createUVTex(UV_Name, T_Name)
 	cmds.setAttr('%s.fileTextureName' %T_Name, '%s%s.%s' %(sourecPath, T_Name, fileFormat), type="string")
 	cmds.setAttr('%s.ignoreColorSpaceFileRules' %T_Name, 1)
-	cmds.setAttr('%s.colorSpace' %T_Name, 'Utility - Raw', type="string")
+	cmds.setAttr('%s.colorSpace' %T_Name, 'Raw', type="string")
 
 	N_Name = cmds.shadingNode("aiNormalMap", asUtility = True, n = S_Name + "_aiNormalMap" )
 
@@ -106,17 +109,50 @@ def createUVTex(UV_Name, T_Name):
 	cmds.connectAttr('%s.outUV' %UV_Name, '%s.uv' %tex, f = True)
 	cmds.connectAttr('%s.outUvFilterSize' %UV_Name, '%s.uvFilterSize' %tex, f = True)
 
-if __name__=='__main__':
-	sourecPath = "lib\\foliage\\treeA\\textures"
-	fileFormat = "png" 
+# UI setup
+def connectButtonPush(pathfield, formatfield, checkMap, *args):
+	sourecPath = cmds.textField(pathfield, query=True, text=True) + '\\'
+	fileFormat = cmds.textField(formatfield, query=True, text=True) 
+
 	shaders = cmds.ls(sl=True)
 	
 	for i in range (len(shaders)):
 		UV_Name = createUVnode(shaders[i])
-		createBaseColor(shaders[i],UV_Name,sourecPath,fileFormat)
-		createRoughness(shaders[i],UV_Name,sourecPath,fileFormat)
-		createMetalness(shaders[i],UV_Name,sourecPath,fileFormat)
-		createSubsurface(shaders[i],UV_Name,sourecPath,fileFormat)
-		createNormal(shaders[i],UV_Name,sourecPath,fileFormat)
+		if (cmds.checkBox(checkMap[0], query=True, value=True)):
+			createBaseColor(shaders[i], UV_Name, sourecPath, fileFormat)
+		if (cmds.checkBox(checkMap[1], query=True, value=True)):
+			createRoughness(shaders[i], UV_Name, sourecPath, fileFormat)
+		if (cmds.checkBox(checkMap[2], query=True, value=True)):
+			createMetalness(shaders[i], UV_Name, sourecPath, fileFormat)
+		if (cmds.checkBox(checkMap[3], query=True, value=True)):
+			createSubsurface(shaders[i], UV_Name, sourecPath, fileFormat)
+		if (cmds.checkBox(checkMap[4], query=True, value=True)):
+			createNormal(shaders[i], UV_Name, sourecPath, fileFormat)
 
 		cmds.select(shaders[i], r = True)
+
+def autoAiStandard():
+		
+	window = cmds.window( title = 'autoAiStandard', iconName = 'autoAS', widthHeight = (300, 200), sizeable = False)
+	cmds.frameLayout('Texture File Path', labelAlign ='top', borderStyle ='in')
+	cmds.rowColumnLayout(numberOfColumns = 2, columnWidth = [(1, 80), (2, 190)], columnSpacing = [(1,10), (2,10)] )
+	cmds.text(label = 'Texture Folder', align = 'right')
+	pathfield = cmds.textField(text = "sourceimages")
+	cmds.text(label='Texture Formet', align = 'right')
+	formatfield = cmds.textField(text = "png")
+	cmds.setParent('..')
+
+	cmds.columnLayout( adjustableColumn=True )
+	checkMap = []
+	checkMap.append(cmds.checkBox( label = 'BaseColor', value = True))
+	checkMap.append(cmds.checkBox( label = 'Roughness', value = True))
+	checkMap.append(cmds.checkBox( label = 'Metalness', value = False))
+	checkMap.append(cmds.checkBox( label = 'Subsurface', value = False))
+	checkMap.append(cmds.checkBox( label = 'Normal', value = True))
+	cmds.setParent('..')
+
+	cmds.button( label = 'I am lazy. Conncet the textures for me.', command = partial(connectButtonPush, pathfield, formatfield, checkMap))
+	cmds.showWindow()
+	
+if __name__=='__main__':
+    autoAiStandard()
