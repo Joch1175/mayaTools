@@ -3,7 +3,7 @@ import maya.OpenMaya as om
 import random as random
 import math as math
 
-UDIM_num = 3
+from functools import partial
 
 def getUvShelList(name):
 	selList = om.MSelectionList()
@@ -40,26 +40,47 @@ def getUvShelList(name):
 		allSets.append({uvset: shells})
 	return allSets
 
-meshList = cmds.ls(sl=True)
+def connectButtonPush(numField, *args):
 
-for mesh in meshList:
-	meshShellDict = getUvShelList(mesh)
-	meshShellDict = meshShellDict[0]['map1']
-	meshShellNum = len(meshShellDict)
-	UDIMList = [[] for i in range(UDIM_num)]
+	UDIM_num = cmds.intField(numField, query=True, value=True)
+	meshList = cmds.ls(sl=True)
 
-	# random mark
-	for key in meshShellDict:
-		intNumber =  int(math.floor(random.random()*UDIM_num))
-		UDIMList[intNumber].append(key)
+	for mesh in meshList:
+		meshShellDict = getUvShelList(mesh)
+		meshShellDict = meshShellDict[0]['map1']
+		meshShellNum = len(meshShellDict)
+		UDIMList = [[] for i in range(UDIM_num)]
+
+		# random mark
+		for key in meshShellDict:
+			intNumber =  int(math.floor(random.random()*UDIM_num))
+			UDIMList[intNumber].append(key)
+		
+		# move UDIM
+		for i in range(len(UDIMList)):
+			cmds.select(clear = True)
+			for shellNum in UDIMList[i]:
+				cmds.select(meshShellDict[shellNum][0], add=True)
+			cmds.polyEditUVShell(uValue = i, relative = True)
+			selection = cmds.ls(sl=True)
+			udimNum = i+1001
+			#print (selection)
+			print ("%s shells are moved to %s" %(len(selection), i+1001))
+
+def randomUDIM():
+		
+	window = cmds.window( title = 'randomUDIM', iconName = 'autoAS', widthHeight = (250, 100), sizeable = False)
+	cmds.frameLayout('UDIM', labelAlign ='top', borderStyle ='in')
+	cmds.rowColumnLayout(numberOfColumns = 2, columnWidth = [(1, 80), (2, 130)], columnSpacing = [(1,10), (2,10)] )
+	cmds.text(label = 'UDIM numbers', align = 'right')
+	numField = cmds.intField(value = 3)
+	cmds.setParent('..')
+
+	cmds.columnLayout( adjustableColumn=True )
+	cmds.setParent('..')
+
+	cmds.button( label = 'random it!', command = partial(connectButtonPush, numField))
+	cmds.showWindow()
 	
-	# move UDIM
-	for i in range(len(UDIMList)):
-		cmds.select(clear = True)
-		for shellNum in UDIMList[i]:
-			cmds.select(meshShellDict[shellNum][0], add=True)
-		cmds.polyEditUVShell(uValue = i, relative = True)
-		selection = cmds.ls(sl=True)
-		udimNum = i+1001
-		print (selection)
-		print ("%n shells are moved to %n" %(len(selection), i+1001))
+if __name__=='__main__':
+    randomUDIM()
