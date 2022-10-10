@@ -41,7 +41,7 @@ def getUvShelList(name):
 	return allSets
 
 def connectButtonPush(numField, *args):
-
+	progressIteration = 0;
 	UDIM_num = cmds.intField(numField, query=True, value=True)
 	meshList = cmds.ls(sl=True)
 
@@ -64,8 +64,9 @@ def connectButtonPush(numField, *args):
 			cmds.polyEditUVShell(uValue = i, relative = True)
 			selection = cmds.ls(sl=True)
 			udimNum = i+1001
-			#print (selection)
-			print ("%s shells are moved to %s" %(len(selection), i+1001))
+			progressIteration += 1
+			progress = float(progressIteration*100)/float(len(meshList)*UDIM_num)
+			print ("%s shells are moved to %s (%s%%)" %(len(selection), i+1001, round(progress,2)))
 
 def randomUDIM():
 		
