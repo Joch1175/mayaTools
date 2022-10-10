@@ -1,3 +1,10 @@
+# randomUDIM.py
+
+# Powered by: Joseph Chen
+# Date 10 Oct 2022
+# Version 8.0
+# Contact: joseph@hellohornet.com / joseph50422@gmail.com
+
 import maya.cmds as cmds
 import maya.OpenMaya as om
 import random as random
