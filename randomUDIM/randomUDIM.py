@@ -1,59 +1,55 @@
 import maya.cmds as cmds
+import maya.OpenMaya as om
 import random as random
 import math as math
-from functools import partial
 
-def connectButtonPush(udimfield, checkUnpack, *args):
-	udimNum = cmds.intField(udimfield, query=True, value=True) 
-	meshList = cmds.ls(sl=True)
+UDIM_num = 3
 
-	if (cmds.checkBox(checkUnpack, query=True, value=True)):
-		for mesh in meshList:
-			meshParent = cmds.listRelatives(mesh, parent=True)
-			meshParentChildNum = len(cmds.listRelatives(meshParent, children=True))
-			print (meshParentChildNum)
-			if(meshParentChildNum == 1):
-				temp = cmds.spaceLocator(name='tempLocator')
-				cmds.parent(temp, meshParent)
-			cmds.polySeparate(mesh, name = 'comp_#', constructionHistory=False)
-			compList = cmds.listRelatives(mesh, children=True)
-			
-			for comp in compList:
-				intNumber = int(math.floor(random.random()*udimNum))
-				compFace = comp + '.f[*]'
-				cmds.polyEditUV(compFace, uValue = intNumber, relative = True)
-				print ('%s moved to UDIM_100%s' %(comp, intNumber + 1))
+def getUvShelList(name):
+	selList = om.MSelectionList()
+	selList.add(name)
+	selListIter = om.MItSelectionList(selList, om.MFn.kMesh)
+	pathToShape = om.MDagPath()
+	selListIter.getDagPath(pathToShape)
+	meshNode = pathToShape.fullPathName()
+	uvSets = cmds.polyUVSet(meshNode, query=True, allUVSets =True)
+	allSets = []
+	for uvset in uvSets:
+		shapeFn = om.MFnMesh(pathToShape)
+		shells = om.MScriptUtil()
+		shells.createFromInt(0)
+		# shellsPtr = shells.asUintPtr()
+		nbUvShells = shells.asUintPtr()
+ 
+		uArray = om.MFloatArray()   #array for U coords
+		vArray = om.MFloatArray()   #array for V coords
+		uvShellIds = om.MIntArray() #The container for the uv shell Ids
+ 
+		shapeFn.getUVs(uArray, vArray)
+		shapeFn.getUvShellsIds(uvShellIds, nbUvShells, uvset)
 		
-			cmds.polyUnite(mesh, name=mesh, constructionHistory=False, mergeUVSets=True)
-			cmds.parent(mesh, meshParent)
+		# shellCount = shells.getUint(shellsPtr)
+		shells = {}
+		for i, n in enumerate(uvShellIds):
+			if n in shells:
+				# shells[n].append([uArray[i],vArray[i]])
+				shells[n].append( '%s.map[%i]' % ( name, i ) )
+			else:
+				# shells[n] = [[uArray[i],vArray[i]]]
+				shells[n] = [ '%s.map[%i]' % ( name, i ) ]
+		allSets.append({uvset: shells})
+	return allSets
 
-			if(meshParentChildNum == 1):
-				cmds.delete(temp)
+meshList = cmds.ls(sl=True)
 
-			print ("%s UDIM randomized successfully" %mesh)
-			
-	else:
-		for mesh in meshList:
-			intNumber =  int(math.floor(random.random()*udimNum))
-			meshFace = mesh + '.f[*]'
-			cmds.polyEditUV(meshFace, uValue = intNumber, relative = True)
-			print ("%s moved to UDIM_100%s" %(mesh, intNumber + 1))
-
-def randUDIM():
-
-	window = cmds.window( title = 'randomUDIM', iconName = 'randUDIM', widthHeight = (250, 150), sizeable = False)
-	cmds.frameLayout('Randomize settings', labelAlign ='top', borderStyle ='in')
-	cmds.rowColumnLayout(numberOfColumns = 2, columnWidth = [(1, 80), (2, 120)], columnSpacing = [(1,10), (2,10)] )
-	cmds.text(label = 'UDIM number', align = 'right')
-	udimfield = cmds.intField(value = 3)
-	cmds.setParent('..')
-
-	cmds.columnLayout(adjustableColumn=True)
-	checkUnpack = cmds.checkBox( label = 'Unpack combined meshes.\n(Cannot work with referenced object)', value = False)
-	cmds.setParent('..')
-
-	cmds.button( label = 'Randomize UDIM', command = partial(connectButtonPush, udimfield, checkUnpack))
-	cmds.showWindow()
+for mesh in meshList:
+	meshShellDict = getUvShelList(mesh)
+	meshShellDict = meshShellDict[0]['map1']
+	meshShellNum = len(meshShellDict)
 	
-if __name__=='__main__':
-    randUDIM()
+	for key in meshShellDict:
+	    intNumber =  int(math.floor(random.random()*UDIM_num))
+	    cmds.select(meshShellDict[key][0])
+	    cmds.polyEditUVShell(uValue = intNumber, relative = True)
+	    progress = float(key+1)/ float(meshShellNum)*100.0
+	    print ("%s -> UDIM_100%s, %d/%d (%d%%)" %(meshShellDict[key][0], intNumber+1, key+1, meshShellNum, progress))
