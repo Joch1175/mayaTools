@@ -3,7 +3,7 @@
 # Powered by: Joseph Chen
 # Date 10 Oct 2022
 # Version 3.0
-# Contact: joseph50422@gmail.com
+# Contact: joseph@hellohornet.com / joseph50422@gmail.com
 
 import maya.cmds as cmds
 from functools import partial
