@@ -1,8 +1,8 @@
 # autoAiStandard.py
 
 # Powered by: Joseph Chen
-# Date 15 Oct 2021
-# Version 2.0
+# Date 10 Oct 2022
+# Version 3.0
 # Contact: joseph50422@gmail.com
 
 import maya.cmds as cmds
@@ -28,7 +28,7 @@ def createRoughness(S_Name, UV_Name, sourecPath,fileFormat):
 	cmds.setAttr('%s.fileTextureName' %T_Name, '%s%s.%s' %(sourecPath, T_Name, fileFormat), type="string")
 	cmds.setAttr('%s.ignoreColorSpaceFileRules' %T_Name, 1)
 	cmds.setAttr('%s.alphaIsLuminance' %T_Name, 1)
-	cmds.setAttr('%s.colorSpace' %T_Name, 'Raw', type="string")
+	cmds.setAttr('%s.colorSpace' %T_Name, 'Utility - Raw', type="string")
 
 	CC_Name = cmds.shadingNode("aiColorCorrect", asUtility = True, n = T_Name + "_CC" )
 
@@ -42,7 +42,7 @@ def createMetalness(S_Name, UV_Name, sourecPath,fileFormat):
 	cmds.setAttr('%s.fileTextureName' %T_Name, '%s%s.%s' %(sourecPath, T_Name, fileFormat), type="string")
 	cmds.setAttr('%s.ignoreColorSpaceFileRules' %T_Name, 1)
 	cmds.setAttr('%s.alphaIsLuminance' %T_Name, 1)
-	cmds.setAttr('%s.colorSpace' %T_Name, 'Raw', type="string")
+	cmds.setAttr('%s.colorSpace' %T_Name, 'Utility - Raw', type="string")
 
 	CC_Name = cmds.shadingNode("aiColorCorrect", asUtility = True, n = T_Name + "_CC" )
 
@@ -57,7 +57,7 @@ def createSubsurface(S_Name, UV_Name, sourecPath,fileFormat):
 	cmds.setAttr('%s.fileTextureName' %T_Name, '%s%s.%s' %(sourecPath, T_Name, fileFormat), type="string")
 	cmds.setAttr('%s.ignoreColorSpaceFileRules' %T_Name, 1)
 	cmds.setAttr('%s.alphaIsLuminance' %T_Name, 1)
-	cmds.setAttr('%s.colorSpace' %T_Name, 'Raw', type="string")
+	cmds.setAttr('%s.colorSpace' %T_Name, 'Utility - Raw', type="string")
 
 	Color_Name = cmds.shadingNode("aiColorCorrect", asUtility = True, n = S_Name + "_SSSColor_CC" )
 	Radius_Name = cmds.shadingNode("aiColorCorrect", asUtility = True, n = S_Name + "SSSRadius_CC" )
@@ -76,7 +76,7 @@ def createNormal(S_Name, UV_Name, sourecPath,fileFormat):
 	createUVTex(UV_Name, T_Name)
 	cmds.setAttr('%s.fileTextureName' %T_Name, '%s%s.%s' %(sourecPath, T_Name, fileFormat), type="string")
 	cmds.setAttr('%s.ignoreColorSpaceFileRules' %T_Name, 1)
-	cmds.setAttr('%s.colorSpace' %T_Name, 'Raw', type="string")
+	cmds.setAttr('%s.colorSpace' %T_Name, 'Utility - Raw', type="string")
 
 	N_Name = cmds.shadingNode("aiNormalMap", asUtility = True, n = S_Name + "_aiNormalMap" )
 
