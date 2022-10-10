@@ -46,10 +46,20 @@ for mesh in meshList:
 	meshShellDict = getUvShelList(mesh)
 	meshShellDict = meshShellDict[0]['map1']
 	meshShellNum = len(meshShellDict)
-	
+	UDIMList = [[] for i in range(UDIM_num)]
+
+	# random mark
 	for key in meshShellDict:
-	    intNumber =  int(math.floor(random.random()*UDIM_num))
-	    cmds.select(meshShellDict[key][0])
-	    cmds.polyEditUVShell(uValue = intNumber, relative = True)
-	    progress = float(key+1)/ float(meshShellNum)*100.0
-	    print ("%s -> UDIM_100%s, %d/%d (%d%%)" %(meshShellDict[key][0], intNumber+1, key+1, meshShellNum, progress))
+		intNumber =  int(math.floor(random.random()*UDIM_num))
+		UDIMList[intNumber].append(key)
+	
+	# move UDIM
+	for i in range(len(UDIMList)):
+		cmds.select(clear = True)
+		for shellNum in UDIMList[i]:
+			cmds.select(meshShellDict[shellNum][0], add=True)
+		cmds.polyEditUVShell(uValue = i, relative = True)
+		selection = cmds.ls(sl=True)
+		udimNum = i+1001
+		print (selection)
+		print ("%n shells are moved to %n" %(len(selection), i+1001))
