@@ -1,31 +1,25 @@
-# xgenBatchBlendShape.py
+import pymel.core as pm
+import re
 
-import maya.cmds as cmds
+#find all namespaces
+ns = pm.getReferences()
+assetNS, xgenNS = [], []
 
-# List all the GEO node and get its name
-xgenlist = cmds.listRelatives(c=True, ad=True, f=True, type="transform") 
-scalps = [ x for x in xgenlist if "GEO" in x ]
+for element in ns.keys():
+    xgenNS = [element for element in ns.keys() if 'xgenMain' in element]
+    assetNS = [element for element in ns.keys() if 'rigMain' in element] 
 
-# Go through all the scalps and find the corresponding mesh
-# Make the blendshape connection
-for x in scalps:
-    # Deconstruct the GEO name and get the keyword for searching
-    keyword = x.split(":")[-1]
-    key = "*:*" + keyword.replace("scalp_", "") + "*"
-    
-    # Search corresponding mesh and filter out PROXY and Shape node
-    result = cmds.ls(key, ap=True, l=True)
-    result = [i for i in result if "Shape" not in i]
-    result = [i for i in result if "PROXY" not in i]
+#iterate through XGen splines
+for each in pm.ls(type="xgmSplineBase"):
+    print('SplineBase: ' + each)
+    for xgen_substrate in each.inputs():
+        print('XGen Substrate Name: ' + xgen_substrate + ' with cbId: ' + xgen_substrate.cbId.get())
+        #now search in MDL grp only, ignoring PROXY grp, for anything that has scalp_GEO and replace search string with just GEO
+        asset_substrate = pm.ls(regex='.*MDL_GRP\|.*' + xgen_substrate.name().replace('scalp_GEO', 'GEO').split(':')[1])
+        #print asset_substrate
+        print('Asset Substrate Name: ' + asset_substrate[0] + ' with cbId: ' + asset_substrate[0].cbId.get())
+    print('\n')
 
-    # Show Warning when no corresponding mesh or more than 1
-    if len(result) == 0:
-        cmds.warning ("[" + keyword + "] No object correspond to the scalp.")
-        continue
-    elif len(result) > 1 :
-        result = [] 
-        cmds.warning ("[" + keyword + "] More than 1 object correspond to the scalp.")
-        continue
-    
-    # Create blendshape and set the weight as 1
-    blend = cmds.blendShape(result, x, w=(0,1))
+#experimental
+pm.ls(regex='.*MDL_GRP\|.*scalp_\d+_GEO')
+pm.selected()[0].cbId.get()
