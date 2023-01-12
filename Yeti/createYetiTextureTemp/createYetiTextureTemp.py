@@ -9,6 +9,9 @@ import pymel.core as pm
 import os
 yeti = pm.ls(type='pgYetiMaya')
 
+if pm.ls('yetiTextureTemp_*'):
+    pm.delete('yetiTextureTemp_*')
+
 # Search all yeti texture nodes in the scene and collect the texture file names
 yetiTextures = []
 for each in yeti:
@@ -19,8 +22,7 @@ for each in yeti:
 
 # Create temp file nodes for yeti textures so it will be submitted to aws with the project
 # If any yetiShaderTemp_* node exists in the scene then don't create temp file nodes again
-if not pm.ls('yetiTextureTemp_*'):
-    for index, item in enumerate(yetiTextures):
-        shaderName = 'yetiTextureTemp_' + str(index)
-        pm.shadingNode('file', name = shaderName, asTexture = True)
-        pm.setAttr(shaderName+'.fileTextureName', 'lib\\char\\yetiTexture\\' + item)
+for index, item in enumerate(yetiTextures):
+    shaderName = 'yetiTextureTemp_' + str(index)
+    pm.shadingNode('file', name = shaderName, asTexture = True)
+    pm.setAttr(shaderName+'.fileTextureName', 'lib\\char\\yetiTexture\\' + item)
